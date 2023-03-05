@@ -1,12 +1,28 @@
-.App{
-    width: 100vh;
-    height: auto;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+.App img {
+  width: 425px;
+  margin: 5px;
 }
 
-img{
-    width: 300px;
-    margin: 10px;
+.App #decryptBtn {
+  margin-inline-start: 3%;
+  border-radius: 5px;
+  padding: 0.5em 1em;
+  border: none;
+  cursor: pointer;
+}
+
+.App #bgDiv {
+  height: 100%;
+  width: 100%;
+  min-height: 100vh;
+  min-width: 100%;
+  background: rgb(81,78,136);
+  background: linear-gradient(90deg, rgba(81,78,136,1) 0%, rgba(148,177,235,1) 63%);
+}
+
+.App #fileUploadBtn {
+  display: inline;
+  margin: 0 auto;
+  margin-inline-start: 30%;
+  margin-block-start: 5%;
 }

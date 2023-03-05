@@ -1,6 +1,4 @@
 import "./App.css";
-import axios from "axios";
-import Base64 from "base64-js";
 import { storage } from "./FirebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState } from "react";
@@ -91,15 +89,13 @@ function App() {
     ); //key is not relevant since we are exporting the key
     console.log("encoded iv", btoa(String.fromCharCode.apply(null, iv)));
 
-    convertToImg(encryptedData, "encryptedImg");
-
     uploadToFirebase(selectedFile.name, fileBlob, "original");
 
     uploadToFirebase(selectedFile.name, encryptedData, "encrypt");
 
-    axios.post("http://localhost:3001/decrypt", {
-      data: "hi"
-    })
+    // axios.post("http://localhost:3001/decrypt", {
+    //   data: "hi",
+    // });
   };
 
   const decryptFile = async () => {
@@ -135,56 +131,67 @@ function App() {
     ); // decrypted is an ArrayBuffer
     console.log("decrypted imported key: ", key);
     console.log("decrypted iv: ", ivDec);
-
-    convertToImg(decryptedData, "decryptedImg");
-  };
-
-  const convertToImg = (arrayBufferData, idParam) => {
-    var binary = "";
-    var bytes = new Uint8Array(arrayBufferData);
-
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    // document.getElementById(idParam).src =
-    //   "data:image/png;base64," + window.btoa(binary);
   };
 
   return (
     <div className="App">
-      <input
-        type="file"
-        id="file-upload"
-        onChange={(evt) => encryptFile(evt)}
-      ></input>
-      <button onClick={() => decryptFile()}>Decrypt</button>
-      {/*   <img src="" id="encryptedImg"></img> */}
-      {/* <img src="" id="decryptedImg"></img> */}
-      {imageListOrg.map((url, id) => {
-        return (
-          <>
-            <p key={id}>Original Image</p>
-            <img src={url} key={id + 1} />
-          </>
-        );
-      })}
-      {imageListEnc.map((url, id) => {
-        return (
-          <>
-            <p key={id}>Encrypted Image</p>
-            <img src={url} key={id + 1} />
-          </>
-        );
-      })}
-      {imageListDec.map((url, id) => {
-        return (
-          <>
-            <p key={id}>Decrypted Image</p>
-            <img src={url} key={id + 1} />
-          </>
-        );
-      })}
+      <div id="bgDiv">
+        <header>
+          <h2 className="mb-4 mx-4 pt-5" style={{ color: "white" }}>
+            Encryptify
+          </h2>
+        </header>
+        <div>
+          <input
+            type="file"
+            id="fileUploadBtn"
+            onChange={(evt) => encryptFile(evt)}
+          ></input>
+          <button id="decryptBtn" onClick={() => decryptFile()}>
+            Decrypt
+          </button>
+        </div>
+        <div className="d-flex justify-content-evenly my-5">
+          {imageListOrg.map((url, id) => {
+            return (
+              <div className="text-center">
+                <p key={id}>Original Image</p>
+                <img src={url} key={id + 1} />
+              </div>
+            );
+          })}
+          {imageListEnc.map((url, id) => {
+            return (
+              <div className="row text-center">
+                <p key={id}>Encrypted Image</p>
+                <img src={url} key={id + 1} />
+              </div>
+            );
+          })}
+          {imageListDec.map((url, id) => {
+            return (
+              <div className="text-center">
+                <p key={id}>Decrypted Image</p>
+                <img src={url} key={id + 1} />
+              </div>
+            );
+          })}
+        </div>
+        <footer
+          style={{
+            marginInlineStart: "40%",
+          }}
+          className="d-flex"
+        >
+          <h6>Made with ❤ by </h6>
+          <a
+            href="https://www.linkedin.com/in/sparshgoyal13/"
+            style={{ textDecoration: "none", color: "white" }}
+          >
+            <h6 style={{ whiteSpace: "pre" }}>Sparsh</h6>
+          </a>
+        </footer>
+      </div>
     </div>
   );
 }
