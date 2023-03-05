@@ -2,6 +2,7 @@ import "./App.css";
 import { storage } from "./FirebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState } from "react";
+import axios from "axios";
 
 let encryptedData;
 let exportedkey;
@@ -13,6 +14,7 @@ function App() {
   const [iv, setIv] = useState(crypto.getRandomValues(new Uint8Array(16)));
 
   const uploadToFirebase = (selectedFileName, file, method) => {
+    var uploadStartTime = new Date();
     var imageRef;
     if (method === "original") {
       imageRef = ref(storage, `original/${selectedFileName}`);
@@ -28,11 +30,27 @@ function App() {
         alert(method + " image uploaded to firebase");
       }
       getDownloadURL(snapshot.ref).then((url) => {
+        var uploadTime = new Date() - uploadStartTime;
         if (method === "original") {
+          console.log(
+            "Upload Time for saving original img: ",
+            uploadTime,
+            " ms"
+          );
           setImageListOrg((prev) => [...prev, url]);
         } else if (method === "encrypt") {
+          console.log(
+            "Upload Time for saving encrypted img: ",
+            uploadTime,
+            " ms"
+          );
           setImageListEnc((prev) => [...prev, url]);
         } else {
+          console.log(
+            "Upload Time for saving decrypted img: ",
+            uploadTime,
+            " ms"
+          );
           setImageListDec((prev) => [...prev, url]);
         }
       });
@@ -40,6 +58,7 @@ function App() {
   };
 
   const encryptFile = async () => {
+    var startTime = new Date();
     var selectedFile = document.querySelector("input").files[0];
     var fileBlob = new Blob([selectedFile]);
 
@@ -72,6 +91,9 @@ function App() {
 
     encryptedData = await crypto.subtle.encrypt(algorithm, key, data);
 
+    var encryptionTime = new Date() - startTime;
+    console.log("encryption time: ", encryptionTime, " ms");
+
     console.log("encrypted data: ", encryptedData);
 
     console.warn(
@@ -89,16 +111,29 @@ function App() {
     ); //key is not relevant since we are exporting the key
     console.log("encoded iv", btoa(String.fromCharCode.apply(null, iv)));
 
+    var encryptionAndEncodingTime = new Date() - startTime;
+    console.log(
+      "encryption and encoding time: ",
+      encryptionAndEncodingTime,
+      " ms"
+    );
+
     uploadToFirebase(selectedFile.name, fileBlob, "original");
 
     uploadToFirebase(selectedFile.name, encryptedData, "encrypt");
 
-    // axios.post("http://localhost:3001/decrypt", {
-    //   data: "hi",
-    // });
+    axios.post("http://localhost:3001/decrypt", {
+      exportedKey: btoa(JSON.stringify(exportedkey)),
+      iV: btoa(String.fromCharCode.apply(null, iv)),
+      encryptedData: btoa(
+        String.fromCharCode.apply(null, new Uint8Array(encryptedData))
+      ),
+    });
   };
 
   const decryptFile = async () => {
+    var startTime = new Date();
+
     let key = await crypto.subtle.importKey(
       "jwk",
       exportedkey,
@@ -106,8 +141,6 @@ function App() {
       true,
       ["encrypt", "decrypt"]
     );
-
-    console.warn("here");
 
     let ivDec = new Uint8Array(iv.toString().split(","));
 
@@ -122,6 +155,9 @@ function App() {
       encryptedData //should be coming from db
     );
 
+    var elapsedTime = new Date() - startTime;
+    console.log("decryption time: ", elapsedTime, " ms");
+
     console.log("decrypted data: ", decryptedData);
 
     uploadToFirebase("decrypted.jpg", decryptedData, "decrypt");
@@ -129,8 +165,8 @@ function App() {
     console.warn(
       "The decrypted data is " + decryptedData.byteLength + " bytes long"
     ); // decrypted is an ArrayBuffer
-    console.log("decrypted imported key: ", key);
-    console.log("decrypted iv: ", ivDec);
+    console.log("Decoded imported key: ", key);
+    console.log("Decoded IV: ", ivDec);
   };
 
   return (
@@ -154,25 +190,31 @@ function App() {
         <div className="d-flex justify-content-evenly my-5">
           {imageListOrg.map((url, id) => {
             return (
-              <div className="text-center">
-                <p key={id}>Original Image</p>
-                <img src={url} key={id + 1} />
+              <div key={id} className="text-center">
+                <p key={id + 1} style={{ color: "white" }}>
+                  Original Image
+                </p>
+                <img src={url} key={id + 2} />
               </div>
             );
           })}
           {imageListEnc.map((url, id) => {
             return (
-              <div className="row text-center">
-                <p key={id}>Encrypted Image</p>
-                <img src={url} key={id + 1} />
+              <div key={id} className="row text-center">
+                <p key={id + 1} style={{ color: "white" }}>
+                  Encrypted Image
+                </p>
+                <img src={url} key={id + 2} />
               </div>
             );
           })}
           {imageListDec.map((url, id) => {
             return (
-              <div className="text-center">
-                <p key={id}>Decrypted Image</p>
-                <img src={url} key={id + 1} />
+              <div key={id} className="text-center">
+                <p key={id + 1} style={{ color: "white" }}>
+                  Decrypted Image
+                </p>
+                <img src={url} key={id + 2} />
               </div>
             );
           })}
